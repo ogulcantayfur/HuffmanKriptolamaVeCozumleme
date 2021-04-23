@@ -1,3 +1,3 @@
 # HuffmanKriptolamaVeCozumleme
 
-#deneme sdfdfdf
+#denemesdfdfdf
