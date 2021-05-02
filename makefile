@@ -17,7 +17,7 @@ lib/libfdr.a: $(OBJS)
 	ranlib lib/libfdr.a
 
 yap: bin/main
-	 ./bin/main
+	
 
 clean:
 	rm -f obj/* lib/* bin/*
@@ -35,4 +35,4 @@ obj/jrb.o: src/jrb.c include/jrb.h include/jval.h
 	gcc $(CFLAGS) -c -o obj/jrb.o src/jrb.c
 
 bin/main: src/main.c $(LIBS)
-	$(CC) $(INCLUDE) -g -o bin/main src/main.c lib/libfdr.a
+	$(CC) $(INCLUDE) -g -o main src/main.c lib/libfdr.a
