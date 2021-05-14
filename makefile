@@ -1,38 +1,30 @@
-# Libraries for fields, doubly-linked lists and red-black trees.
-# Copyright (C) 2018 James S. Plank
-
-CFLAGS = -O3 -Iinclude
-INCLUDE = -Iinclude
-LIBS = lib/libfdr.a
+INCLUDE = -O3 -Ilibfdr/include
+LIBS = libfdr/lib/libfdr.a
 CC = gcc
-EX  =  bin/main
+OBJS = libfdr/obj/dllist.o libfdr/obj/fields.o libfdr/obj/jval.o libfdr/obj/jrb.o
 
 all: lib/libfdr.a \
-	 yap
-
-OBJS = obj/dllist.o obj/fields.o obj/jval.o obj/jrb.o
-
-lib/libfdr.a: $(OBJS)
-	ar ru lib/libfdr.a $(OBJS)
-	ranlib lib/libfdr.a
-
-yap: bin/main
-	
+	kripto
 
 clean:
-	rm -f obj/* lib/* bin/*
+	find . -maxdepth 1 ! -name "makefile" ! -name ".kilit" ! -name "giris_metin" ! -name "Readme.md"  ! -name "main.c" -type f -exec rm -f {} \;
+	rm -f libfdr/obj/* libfdr/lib/*
 
-obj/fields.o: src/fields.c include/fields.h
-	gcc $(CFLAGS) -c -o obj/fields.o src/fields.c
+lib/libfdr.a: $(OBJS)
+	ar ru libfdr/lib/libfdr.a $(OBJS)
+	ranlib libfdr/lib/libfdr.a
 
-obj/jval.o: src/jval.c include/jval.h
-	gcc $(CFLAGS) -c -o obj/jval.o src/jval.c
+libfdr/obj/fields.o: libfdr/src/fields.c libfdr/include/fields.h
+	$(CC) $(INCLUDE) -c -o libfdr/obj/fields.o libfdr/src/fields.c
 
-obj/dllist.o: src/dllist.c include/dllist.h include/jval.h
-	gcc $(CFLAGS) -c -o obj/dllist.o src/dllist.c
+libfdr/obj/jval.o: libfdr/src/jval.c libfdr/include/jval.h
+	$(CC) $(INCLUDE) -c -o libfdr/obj/jval.o libfdr/src/jval.c
 
-obj/jrb.o: src/jrb.c include/jrb.h include/jval.h
-	gcc $(CFLAGS) -c -o obj/jrb.o src/jrb.c
+libfdr/obj/dllist.o: libfdr/src/dllist.c libfdr/include/dllist.h libfdr/include/jval.h
+	$(CC) $(INCLUDE) -c -o libfdr/obj/dllist.o libfdr/src/dllist.c
 
-bin/main: src/main.c $(LIBS)
-	$(CC) $(INCLUDE) -g -o main src/main.c lib/libfdr.a
+libfdr/obj/jrb.o: libfdr/src/jrb.c libfdr/include/jrb.h libfdr/include/jval.h
+	$(CC) $(INCLUDE) -c -o libfdr/obj/jrb.o libfdr/src/jrb.c
+
+kripto:	main.c $(LIBS) 
+	$(CC) $(INCLUDE) -g -Wall -o kripto main.c $(LIBS)
