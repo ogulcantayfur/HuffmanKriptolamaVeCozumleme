@@ -9,6 +9,10 @@ int _satir(){
     IS is;
     int satir=0;
     is=new_inputstruct(".kilit");
+    if (is == NULL) {
+        perror(".kilit");
+        exit(1);
+    }
     while(get_line(is) >= 0) {
     satir++;
   }
@@ -18,118 +22,128 @@ int _satir(){
 
 int main(int argc, char **argv)
 {
+  if (argc != 4) 
+  { 
+    fprintf(stderr,"Girilen parametreler yanlis "); 
+    exit(1); 
+  }
+  if(strcmp(argv[1],"-e")!=0 && strcmp(argv[1],"-d")!=0){
+    fprintf(stderr,"girilen parametre -e ve -d opsiyonlarina uygun degil, parametreyi kontrol ediniz");
+    exit(1);
+  }
   JRB b;  
   IS is,is_metin;
   int i;
   char *token;
   char *token2;
   char *word;
-  char *word2;
-  int satir=0, satir2=0;
+  int satir=0;
   satir=_satir();
 
   is=new_inputstruct(".kilit");
-  is_metin=new_inputstruct(argv[2]);
-  b = make_jrb();
-  
-  if(is==NULL){ 
-    printf("kilit dosyası yok");
-    return 0;
+  if (is == NULL) {
+        perror(".kilit");
+        exit(1);
   }
+  is_metin=new_inputstruct(argv[2]);
+  if (is == NULL) {
+        perror(argv[2]);
+        exit(1);
+  }
+  b = make_jrb();
 
-  while(get_line(is) >= 0) {
-
+  while(get_line(is) >= 0) 
+  {
     if(is->line==1){
      token=strdup(is->fields[0]);
-      if (*(token)!='{')
+      if (strcmp(token,"{")!=0 || is->NF !=1)
       {
-        printf("Parantez yok, json dosyasi gecersiz\n");
-        return 0;
+        fprintf(stderr,"json dosyasi gecersiz\n");
+        exit(1); 
       }
+      continue;
     }
     if(is->line == satir){
       token=strdup(is->fields[0]);
-        if (*(token)!='}')
+        if (strcmp(token,"}")!=0 || is->NF !=1)
         {  
-          printf("Parantez yok, json dosyasi gecersiz\n");
-          return 0;
-        }        
+          fprintf(stderr,"json dosyasi gecersiz\n");
+          exit(1);
+        }    
+      continue;    
     }     
-    if (is->line > satir2+2)
-    {
-      printf("Satir duzenlemesi yanlis, json dosyasi gecersiz\n");
-      return 0;
-    }
-    if(is->NF!=2){continue;} 
-    satir2++;
     token=strdup(is->fields[0]);
     token2=strdup(is->fields[1]); 
-    
-    if (is->line == satir2+1)
+  
+    if (is->line < satir)  
     {
-      if (is->line < satir)  
-      {
-        for (i = 0; i < strlen(token); i++) {
-          if (*(token)!='\"')
+      if(is->NF!=2){
+        fprintf(stderr,"json dosyasi gecersiz\n");
+        exit(1);
+      }
+      for (i = 0; i < strlen(token); i++) {
+        if (*(token)!='\"')
+        {
+          fprintf(stderr,"json dosyasi gecersiz\n");
+          exit(1);
+        }
+        if(i==strlen(token)-2){
+          if(*(token+i)!='\"' || *(token+i+1)!=':')
           {
-            printf("Kelimenin baslangicinda \" isareti yok, json dosyasi gecersiz\n");
-            return 0;
-          }
-          if(i==strlen(token)-2){
-            if(*(token+i)!='\"' || *(token+i+1)!=':')
+            fprintf(stderr,"json dosyasi gecersiz\n");
+            exit(1);
+          } 
+        }     
+      }
+      for (i = 0; i < strlen(token2); i++) {
+        if (*(token2)!='\"')
+        {
+          fprintf(stderr,"json dosyasi gecersiz\n");
+          exit(1);
+        }
+        if(is->line < satir-1){        
+          if(i==strlen(token2)-2){
+            if(*(token2+i)!='\"' || *(token2+i+1)!=',')
             {
-              printf("Kelime sonu \": formatina uygun degil, json dosyası geçersiz\n");
-              return 0;
-            } 
-          }      
-        }
-        for (i = 0; i < strlen(token2); i++) {
-          if (*(token2)!='\"')
-          {
-            printf("Huffman kodu baslangicinda \" isareti yok, json dosyasi gecersiz\n");
-            return 0;
-          }
-          if(is->line < satir-1){        
-            if(i==strlen(token2)-2){
-              if(*(token2+i)!='\"' || *(token2+i+1)!=',')
-              {
-                printf("Huffman kodu sonu \", formatina uygun degil, json dosyası geçersiz\n");
-                return 0;
-              }
+              fprintf(stderr,"json dosyasi gecersiz\n");
+              exit(1);
             }
           }
-          else if(is->line == satir-1)  
-          {
-            if(i==strlen(token2)-1){
-              if(*(token2+i)!='\"')
-              {
-                printf("Son satirdaki huffman kodu sonu \" formatinda olmalı, json dosyası geçersiz\n");
-                return 0;
-              }
-            }
-          }        
         }
+        else if(is->line == satir-1)  
+        {
+          if(i==strlen(token2)-1){
+            if(*(token2+i)!='\"')
+            {
+              fprintf(stderr,"json dosyasi gecersiz\n");
+              exit(1);
+            }
+          }
+        }        
       }
     }
-    
-    word=strtok(token,"{}\"");
-    word2=strtok(token2,"{}\"");
- 
+    token[strlen(token)-2]='\0';
+    token=token+1;
+    char*slash = strstr(token,"\\");
+    while(slash != NULL){
+      char *_kelime = strdup(slash+1);
+      strcpy(slash,_kelime);
+      slash = strstr(token,"\\");
+      free(_kelime);
+    }
+
+    word=strtok(token2,"\"");
+
     if(strcmp(argv[1],"-e")==0){
-      jrb_insert_str(b, strdup(word), new_jval_s(strdup(word2)));
-      free(token);
+      jrb_insert_str(b, strdup(token), new_jval_s(strdup(word)));
+      free(token-1);
       free(token2);
     }
     else if(strcmp(argv[1],"-d")==0){
-      jrb_insert_str(b, strdup(word2), new_jval_s(strdup(word)));
-      free(token);
+      jrb_insert_str(b, strdup(word), new_jval_s(strdup(token)));
+      free(token-1);
       free(token2);
     }
-    else{
-       printf("girilen parametre -e ve -d opsiyonlarina uygun degil, parametreyi kontrol ediniz");
-       return 0;
-    }
-    
   }
     FILE *dosya = fopen(argv[3], "w");
     
@@ -148,7 +162,8 @@ int main(int argc, char **argv)
         fprintf(dosya," ");
        }
     }
-  
+  fclose(dosya);
+  jrb_free_tree(b);
   jettison_inputstruct(is);
   return 0;
 }
